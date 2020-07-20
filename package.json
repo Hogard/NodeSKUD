@@ -1,0 +1,19 @@
+{
+  "name": "nodeskud",
+  "version": "0.9.1",
+  "description": "Revers 8000 API integration",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Artyom Yudin",
+  "license": "ISC",
+  "dependencies": {
+    "jsonwebtoken": "^8.5.1",
+    "md5": "^2.2.1",
+    "mysql": "^2.17.1",
+    "node-datetime": "^2.1.2",
+    "winston": "^3.2.1",
+    "ws": "^7.0.1"
+  }
+}
