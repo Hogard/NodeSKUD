@@ -8,12 +8,21 @@
   },
   "author": "Artyom Yudin",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ArtyomYudin/NodeSKUD.git"
+  },
   "dependencies": {
     "jsonwebtoken": "^8.5.1",
     "md5": "^2.2.1",
-    "mysql": "^2.17.1",
+    "mysql": "^2.18.1",
     "node-datetime": "^2.1.2",
-    "winston": "^3.2.1",
-    "ws": "^7.0.1"
+    "winston": "^3.3.3",
+    "ws": "^7.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.5.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
   }
 }
