@@ -1,11 +1,11 @@
-'use strict';
-
 const tls = require('tls');
 const fs = require('fs');
 
-const config = require('./../config/system_config');
+require('tls').DEFAULT_MIN_VERSION = 'TLSv1';
 
-const logger = require('./../config/logger_config');
+const config = require('../config/system_config');
+
+const logger = require('../config/logger_config');
 
 const options = {
   requestCert: true,
@@ -28,7 +28,6 @@ function createBuffer(postJSONData) {
   buffer.copy(bufferWithByte, 4);
   return bufferWithByte;
 }
-
 
 // Соединение с сервером Revers 8000 API
 function initApiSocket() {

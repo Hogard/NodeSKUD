@@ -1,18 +1,16 @@
-'use strict';
-
-const logger = require('./../config/logger_config');
+const logger = require('../config/logger_config');
 
 const initApiSocket = require('./revers_api_socket');
 const initHttpServer = require('./http_server');
 const createJSONRequest = require('./create_json');
 const websocketServer = require('./websocket_server');
-const dbConnect = require('./../utils/db_connect');
-const dbInsert = require('./../utils/db_insert');
-const dbSelect = require('./../utils/db_select');
-
+const dbConnect = require('../utils/db_connect');
+const dbInsert = require('../utils/db_insert');
+const dbSelect = require('../utils/db_select');
 
 const wss = websocketServer();
 
+const initZabbixAPIServer = require('./zabbix_api_server');
 
 const socket = initApiSocket();
 // const http = httpServer(socket);
@@ -31,17 +29,21 @@ async function guestPerDay(clientId) {
     if (clientId) {
       // io.to(clientId).emit('event_guest_per_day', guestEntrancePerDayRows.length + guestCIPerDayRows.length);
 
-      clientId.send(JSON.stringify({
-        event: 'event_guest_per_day',
-        data: guestEntrancePerDayRows.length + guestCIPerDayRows.length,
-      }));
-    } else {
-      // io.emit('event_guest_per_day', guestEntrancePerDayRows.length + guestCIPerDayRows.length);
-      wss.clients.forEach((client) => {
-        client.send(JSON.stringify({
+      clientId.send(
+        JSON.stringify({
           event: 'event_guest_per_day',
           data: guestEntrancePerDayRows.length + guestCIPerDayRows.length,
-        }));
+        }),
+      );
+    } else {
+      // io.emit('event_guest_per_day', guestEntrancePerDayRows.length + guestCIPerDayRows.length);
+      wss.clients.forEach(client => {
+        client.send(
+          JSON.stringify({
+            event: 'event_guest_per_day',
+            data: guestEntrancePerDayRows.length + guestCIPerDayRows.length,
+          }),
+        );
       });
     }
   } catch (error) {
@@ -53,16 +55,20 @@ async function carTotalPerDay(clientId) {
   try {
     const carTotalPerDayRows = await dbConnect.query(dbSelect.carTotalPerDay);
     if (clientId) {
-      clientId.send(JSON.stringify({
-        event: 'event_car_per_day',
-        data: carTotalPerDayRows.length,
-      }));
-    } else {
-      wss.clients.forEach((client) => {
-        client.send(JSON.stringify({
+      clientId.send(
+        JSON.stringify({
           event: 'event_car_per_day',
           data: carTotalPerDayRows.length,
-        }));
+        }),
+      );
+    } else {
+      wss.clients.forEach(client => {
+        client.send(
+          JSON.stringify({
+            event: 'event_car_per_day',
+            data: carTotalPerDayRows.length,
+          }),
+        );
       });
     }
   } catch (error) {
@@ -88,7 +94,7 @@ async function realCarOnTerritory(clientId) {
       carRealExitArray[i] = row.gc_value_sys;
     });
     let pos;
-    carRealExitArray.forEach((row) => {
+    carRealExitArray.forEach(row => {
       pos = carRealEntryArray.indexOf(row);
       if (pos !== -1) {
         carRealEntryArray.splice(pos, 1);
@@ -99,16 +105,20 @@ async function realCarOnTerritory(clientId) {
   }
   // io.emit('event_real_car_on_territory', carRealEntryArray.length);
   if (clientId) {
-    clientId.send(JSON.stringify({
-      event: 'event_real_car_on_territory',
-      data: carRealEntryArray.length,
-    }));
-  } else {
-    wss.clients.forEach((client) => {
-      client.send(JSON.stringify({
+    clientId.send(
+      JSON.stringify({
         event: 'event_real_car_on_territory',
         data: carRealEntryArray.length,
-      }));
+      }),
+    );
+  } else {
+    wss.clients.forEach(client => {
+      client.send(
+        JSON.stringify({
+          event: 'event_real_car_on_territory',
+          data: carRealEntryArray.length,
+        }),
+      );
     });
   }
 }
@@ -123,7 +133,7 @@ function sendExtJSON(reqBody) {
       realCarOnTerritory();
       carTotalPerDay();
     }
-    socketReq.on('data', (data) => {
+    socketReq.on('data', data => {
       try {
         const resive = JSON.parse(data.slice(4).toString());
         logger.info(resive);
@@ -190,7 +200,7 @@ async function realOnTerritory(evAddr, clientId) {
       empRealExitArray[i] = row.ev_ow_id;
     });
     let pos;
-    empRealExitArray.forEach((row) => {
+    empRealExitArray.forEach(row => {
       pos = empRealEntryArray.indexOf(row);
       if (pos !== -1) {
         empRealEntryArray.splice(pos, 1);
@@ -216,7 +226,7 @@ async function realOnTerritory(evAddr, clientId) {
       guestRealExitArray[i] = row.ev_ca_value;
     });
     let pos;
-    guestRealExitArray.forEach((row) => {
+    guestRealExitArray.forEach(row => {
       pos = guestRealEntryArray.indexOf(row);
       if (pos !== -1) {
         guestRealEntryArray.splice(pos, 1);
@@ -229,32 +239,40 @@ async function realOnTerritory(evAddr, clientId) {
   if (building === 'AC') {
     // io.emit('event_real_on_territory_ac', { empRealAC: empRealEntryArray.length, guestRealAC: guestRealEntryArray.length });
     if (clientId) {
-      clientId.send(JSON.stringify({
-        event: 'event_real_on_territory_ac',
-        data: { empReal: empRealEntryArray.length, guestReal: guestRealEntryArray.length },
-      }));
-    } else {
-      wss.clients.forEach((client) => {
-        client.send(JSON.stringify({
+      clientId.send(
+        JSON.stringify({
           event: 'event_real_on_territory_ac',
           data: { empReal: empRealEntryArray.length, guestReal: guestRealEntryArray.length },
-        }));
+        }),
+      );
+    } else {
+      wss.clients.forEach(client => {
+        client.send(
+          JSON.stringify({
+            event: 'event_real_on_territory_ac',
+            data: { empReal: empRealEntryArray.length, guestReal: guestRealEntryArray.length },
+          }),
+        );
       });
     }
   } // else {
   // io.emit('event_real_on_territory_as', { empRealAS: empRealEntryArray.length, guestRealAS: guestRealEntryArray.length });
   if (building === 'AS') {
     if (clientId) {
-      clientId.send(JSON.stringify({
-        event: 'event_real_on_territory_as',
-        data: { empReal: empRealEntryArray.length, guestReal: guestRealEntryArray.length },
-      }));
-    } else {
-      wss.clients.forEach((client) => {
-        client.send(JSON.stringify({
+      clientId.send(
+        JSON.stringify({
           event: 'event_real_on_territory_as',
           data: { empReal: empRealEntryArray.length, guestReal: guestRealEntryArray.length },
-        }));
+        }),
+      );
+    } else {
+      wss.clients.forEach(client => {
+        client.send(
+          JSON.stringify({
+            event: 'event_real_on_territory_as',
+            data: { empReal: empRealEntryArray.length, guestReal: guestRealEntryArray.length },
+          }),
+        );
       });
     }
   }
@@ -276,24 +294,49 @@ function parseEvent(data) {
   const apEntry = [1, 5, 16, 21, 27, 36, 39, 41, 43, 45, 47];
   const apExit = [2, 6, 17, 20, 28, 37, 40, 42, 44, 46, 48];
   const employee = [3, 4, 189, 190, 191, 192, 193, 194, 195, 332];
-  const guestCardId = [230, 231, 235, 236, 239, 240,
-    241, 242, 244, 246, 247, 248,
-    249, 250, 251, 252, 256, 257,
-    258, 261, 262, 263, 264, 265,
-    266, 267, 268, 269, 270, 280,
-    287, 291, 293, 295, 296, 298,
+  const guestCardId = [
+    230,
+    231,
+    235,
+    236,
+    239,
+    240,
+    241,
+    242,
+    244,
+    246,
+    247,
+    248,
+    249,
+    250,
+    251,
+    252,
+    256,
+    257,
+    258,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    280,
+    287,
+    291,
+    293,
+    295,
+    296,
+    298,
     301,
   ];
 
-  resive.Data.forEach(async (item) => {
+  resive.Data.forEach(async item => {
     if (item.EvCode === 1) {
-      const insertEventValue = [
-        item.EvTime.replace(/(\d+).(\d+).(\d+)/, '$3-$2-$1'),
-        item.EvCode,
-        item.EvAddr,
-        item.EvUser,
-        item.EvCard,
-      ];
+      const insertEventValue = [item.EvTime.replace(/(\d+).(\d+).(\d+)/, '$3-$2-$1'), item.EvCode, item.EvAddr, item.EvUser, item.EvCard];
       try {
         await dbConnect.query(dbInsert.inserEvent, insertEventValue);
         if (apEntry.indexOf(item.EvAddr) !== -1) {
@@ -303,11 +346,13 @@ function parseEvent(data) {
             //   io.emit('event_entry', row);
             // });
             const allTenEntryRows = await dbConnect.query(dbSelect.allTenEntry);
-            wss.clients.forEach((client) => {
-              client.send(JSON.stringify({
-                event: 'event_entry',
-                data: allTenEntryRows,
-              }));
+            wss.clients.forEach(client => {
+              client.send(
+                JSON.stringify({
+                  event: 'event_entry',
+                  data: allTenEntryRows,
+                }),
+              );
             });
           } catch (error) {
             logger.error(error);
@@ -319,11 +364,13 @@ function parseEvent(data) {
             try {
               const employeeTotalPerDayRows = await dbConnect.query(dbSelect.employeeTotalPerDay);
               // io.emit('event_employee_per_day', employeeTotalPerDayRows.length);
-              wss.clients.forEach((client) => {
-                client.send(JSON.stringify({
-                  event: 'event_employee_per_day',
-                  data: employeeTotalPerDayRows.length,
-                }));
+              wss.clients.forEach(client => {
+                client.send(
+                  JSON.stringify({
+                    event: 'event_employee_per_day',
+                    data: employeeTotalPerDayRows.length,
+                  }),
+                );
               });
             } catch (error) {
               logger.error(error);
@@ -349,11 +396,13 @@ function parseEvent(data) {
             //   io.emit('event_exit', row);
             // });
             const allTenExitRows = await dbConnect.query(dbSelect.allTenExit);
-            wss.clients.forEach((client) => {
-              client.send(JSON.stringify({
-                event: 'event_exit',
-                data: allTenExitRows,
-              }));
+            wss.clients.forEach(client => {
+              client.send(
+                JSON.stringify({
+                  event: 'event_exit',
+                  data: allTenExitRows,
+                }),
+              );
             });
           } catch (error) {
             logger.error(error);
@@ -368,11 +417,13 @@ function parseEvent(data) {
             //   io.emit('event_employeeuc', row);
             // });
             const allEmployeeUCRows = await dbConnect.query(dbSelect.allEmployeeUC);
-            wss.clients.forEach((client) => {
-              client.send(JSON.stringify({
-                event: 'event_employeeuc',
-                data: allEmployeeUCRows,
-              }));
+            wss.clients.forEach(client => {
+              client.send(
+                JSON.stringify({
+                  event: 'event_employeeuc',
+                  data: allEmployeeUCRows,
+                }),
+              );
             });
           } catch (error) {
             logger.error(error);
@@ -395,11 +446,13 @@ function parseEvent(data) {
               timeStamp: lastEmployeeRows[0].tstamp,
             };
           }
-          wss.clients.forEach((client) => {
-            client.send(JSON.stringify({
-              event: 'event_employee',
-              data: lastEmployee,
-            }));
+          wss.clients.forEach(client => {
+            client.send(
+              JSON.stringify({
+                event: 'event_employee',
+                data: lastEmployee,
+              }),
+            );
           });
         }
       } catch (error) {
@@ -416,10 +469,12 @@ async function initDash(clientId) {
     // allTenEntryRows.forEach((row) => {
     //   io.to(clientId).emit('event_entry', row);
     // });
-    clientId.send(JSON.stringify({
-      event: 'event_entry',
-      data: allTenEntryRows,
-    }));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_entry',
+        data: allTenEntryRows,
+      }),
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -429,10 +484,12 @@ async function initDash(clientId) {
     // allTenExitRows.forEach((row) => {
     //   io.to(clientId).emit('event_exit', row);
     // });
-    clientId.send(JSON.stringify({
-      event: 'event_exit',
-      data: allTenExitRows,
-    }));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_exit',
+        data: allTenExitRows,
+      }),
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -442,10 +499,12 @@ async function initDash(clientId) {
     // allEmployeeUCRows.forEach((row) => {
     //   io.to(clientId).emit('event_employeeuc', row);
     // });
-    clientId.send(JSON.stringify({
-      event: 'event_employeeuc',
-      data: allEmployeeUCRows,
-    }));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_employeeuc',
+        data: allEmployeeUCRows,
+      }),
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -453,10 +512,12 @@ async function initDash(clientId) {
   try {
     const employeeTotalPerDayRows = await dbConnect.query(dbSelect.employeeTotalPerDay);
     // io.to(clientId).emit('event_employee_per_day', employeeTotalPerDayRows.length);
-    clientId.send(JSON.stringify({
-      event: 'event_employee_per_day',
-      data: employeeTotalPerDayRows.length,
-    }));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_employee_per_day',
+        data: employeeTotalPerDayRows.length,
+      }),
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -475,10 +536,12 @@ async function initDash(clientId) {
   try {
     const carTotalPerDayRows = await dbConnect.query(dbSelect.carTotalPerDay);
     // io.to(clientId).emit('event_car_per_day', carTotalPerDayRows.length);
-    clientId.send(JSON.stringify({
-      event: 'event_car_per_day',
-      data: carTotalPerDayRows.length,
-    }));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_car_per_day',
+        data: carTotalPerDayRows.length,
+      }),
+    );
   } catch (error) {
     logger.error(error);
   }
@@ -510,16 +573,17 @@ async function initDash(clientId) {
 // */
 // });
 
-wss.on('connection', (ws) => {
+wss.on('connection', ws => {
   const id = Math.random();
   clients[id] = ws;
   logger.info(`New connection ${id}`);
 
-  ws.on('message', (message) => {
+  ws.on('message', message => {
     logger.info(`Received message ${message}`);
   });
 
   initDash(ws);
+  initZabbixAPIServer(ws);
 
   ws.on('close', () => {
     logger.info(`Connection closed ${id}`);
@@ -528,15 +592,14 @@ wss.on('connection', (ws) => {
 });
 
 // Отлов событий uncaughtException и закрытие процесса. Далее pm2 перезапускает службу
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', err => {
   logger.info('Uncaught Exception, Restart service !!!');
   logger.info(err.stack);
   process.exit(1);
 });
 
-
 function reversAPIServer() {
-  socket.on('data', (data) => {
+  socket.on('data', data => {
     try {
       const resive = JSON.parse(data.slice(4).toString());
       logger.info(resive);
@@ -552,14 +615,13 @@ function reversAPIServer() {
     logger.info('Revers API client disconnected from server');
   });
 
-  socket.on('error', (err) => {
+  socket.on('error', err => {
     socket.destroy();
     logger.error({ 'Revers API connect error:': err });
     process.exit(1);
     // socket = initApiSocket();
   });
 }
-
 
 exports.sendExtJSON = sendExtJSON;
 module.exports = reversAPIServer;

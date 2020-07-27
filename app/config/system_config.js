@@ -1,8 +1,6 @@
 /**
-* Конфигурационный файл
-*/
-
-'use strict';
+ * Конфигурационный файл
+ */
 
 const config = {
   server: {
@@ -23,6 +21,11 @@ const config = {
   },
   jwt: {
     secret: 'HxQiRJ1LkSga',
+  },
+  zabbix: {
+    host: 'http://zabbix.center-inform.ru/api_jsonrpc.php',
+    user: 'ZabbixAPIUser',
+    password: 'G4SCb68LIbL8',
   },
 };
 
