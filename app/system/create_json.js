@@ -2,14 +2,12 @@
  * Модуль формирования запросов для отправки на API Revers 8000
  */
 
-'use strict';
-
 const datetime = require('node-datetime');
 // const photoDownloader = require('./photo_downloader');
 
-const logger = require('./../config/logger_config');
-const dbConnect = require('./../utils/db_connect');
-const dbInsert = require('./../utils/db_insert');
+const logger = require('../config/logger_config');
+const dbConnect = require('../utils/db_connect');
+const dbInsert = require('../utils/db_insert');
 
 // создание буфера JSON, добавляя 4 байта длинны (младшими байтами вперед) в начало
 function createBuffer(postJSONData) {
@@ -78,11 +76,23 @@ async function createJSONRequest(socket, reqBody, retry) {
   }
   */
 
-  logger.info({ 'Event:': [reqBodyJSON.event, 'Card number 1:', reqBodyJSON.card_no, 'Card number 2:', cardNumber, 'Pass Type:', reqBodyJSON.pass_type, 'Retry:', retry] });
+  logger.info({
+    'Event:': [
+      reqBodyJSON.event,
+      'Card number 1:',
+      reqBodyJSON.card_no,
+      'Card number 2:',
+      cardNumber,
+      'Pass Type:',
+      reqBodyJSON.pass_type,
+      'Retry:',
+      retry,
+    ],
+  });
   logger.info({ 'Photo:': reqBodyJSON.photo });
   if (!retry) {
     // const cardType = (/pass_auto_cam/.test(reqBodyJSON.photo)) ? 'car' : 'person';
-    const cardType = (/автомобиль/.test(reqBodyJSON.pass_type)) ? 'car' : 'person';
+    const cardType = /автомобиль/.test(reqBodyJSON.pass_type) ? 'car' : 'person';
     const insertEventValue = [
       getRequestTstamp.format('Y-m-d H:M:S'),
       reqBodyJSON.event,
@@ -151,10 +161,15 @@ async function createJSONRequest(socket, reqBody, retry) {
         Version: 1,
         CardNum: cardNumber,
       });
-      if (!retry) { socket.write(createBuffer(postJSONAccess)); }
-      setTimeout(() => {
-        socket.write(createBuffer(postJSONData));
-      }, ((retry) ? 10000 : 2000));
+      if (!retry) {
+        socket.write(createBuffer(postJSONAccess));
+      }
+      setTimeout(
+        () => {
+          socket.write(createBuffer(postJSONData));
+        },
+        retry ? 10000 : 2000,
+      );
 
       break;
     default:

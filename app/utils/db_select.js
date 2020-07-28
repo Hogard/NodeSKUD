@@ -1,12 +1,40 @@
-'use strict';
-
 const guestEntranceCardId = 293;
-const guestCICardId = [230, 231, 235, 236, 239, 240,
-  241, 242, 244, 246, 247, 248,
-  249, 250, 251, 252, 256, 257,
-  258, 261, 262, 263, 264, 265,
-  266, 267, 268, 269, 270, 280,
-  287, 291, 295, 296, 298,
+const guestCICardId = [
+  230,
+  231,
+  235,
+  236,
+  239,
+  240,
+  241,
+  242,
+  244,
+  246,
+  247,
+  248,
+  249,
+  250,
+  251,
+  252,
+  256,
+  257,
+  258,
+  261,
+  262,
+  263,
+  264,
+  265,
+  266,
+  267,
+  268,
+  269,
+  270,
+  280,
+  287,
+  291,
+  295,
+  296,
+  298,
   301,
 ];
 // const employeeUC = [3, 4, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205];
@@ -101,9 +129,11 @@ const guestEntrancePerDay = 'SELECT * FROM guest_card WHERE gc_event = "issue" a
 
 const carTotalPerDay = 'SELECT gc_id FROM guest_card WHERE (date(gc_tstamp) = CURDATE()) and (gc_type = "car") and (gc_event = "issue")';
 
-const empRealEntry = (building) => {
-  const reqLitera = (building === 'AC') ? 'events.ev_addr = 1 or events.ev_addr = 5 or events.ev_addr = 16 or events.ev_addr = 21 or events.ev_addr = 27'
-    : 'events.ev_addr = 36 or events.ev_addr = 39 or events.ev_addr = 45 or events.ev_addr = 47';
+const empRealEntry = building => {
+  const reqLitera =
+    building === 'AC'
+      ? 'events.ev_addr = 1 or events.ev_addr = 5 or events.ev_addr = 16 or events.ev_addr = 21 or events.ev_addr = 27'
+      : 'events.ev_addr = 36 or events.ev_addr = 39 or events.ev_addr = 45 or events.ev_addr = 47';
   return `SELECT events.ev_ow_id
                   FROM events
                   WHERE (date(ev_tstamp) = CURDATE()) 
@@ -111,10 +141,11 @@ const empRealEntry = (building) => {
                         and (${reqLitera}) ORDER by events.ev_ow_id`;
 };
 
-
-const empRealExit = (building) => {
-  const reqLitera = (building === 'AC') ? 'events.ev_addr = 2 or events.ev_addr = 6 or events.ev_addr = 17 or events.ev_addr = 20 or events.ev_addr = 28'
-    : 'events.ev_addr = 37 or events.ev_addr = 40 or events.ev_addr = 46 or events.ev_addr = 48';
+const empRealExit = building => {
+  const reqLitera =
+    building === 'AC'
+      ? 'events.ev_addr = 2 or events.ev_addr = 6 or events.ev_addr = 17 or events.ev_addr = 20 or events.ev_addr = 28'
+      : 'events.ev_addr = 37 or events.ev_addr = 40 or events.ev_addr = 46 or events.ev_addr = 48';
   return `SELECT events.ev_ow_id
                 FROM events
                 WHERE (date(ev_tstamp) = CURDATE()) 
@@ -122,9 +153,11 @@ const empRealExit = (building) => {
                       and (${reqLitera}) ORDER by events.ev_ow_id`;
 };
 
-const guestRealEntry = (building) => {
-  const reqLitera = (building === 'AC') ? 'events.ev_addr = 1 or events.ev_addr = 5 or events.ev_addr = 16 or events.ev_addr = 21 or events.ev_addr = 27'
-    : 'events.ev_addr = 36 or events.ev_addr = 39 or events.ev_addr = 45 or events.ev_addr = 47';
+const guestRealEntry = building => {
+  const reqLitera =
+    building === 'AC'
+      ? 'events.ev_addr = 1 or events.ev_addr = 5 or events.ev_addr = 16 or events.ev_addr = 21 or events.ev_addr = 27'
+      : 'events.ev_addr = 36 or events.ev_addr = 39 or events.ev_addr = 45 or events.ev_addr = 47';
   return `SELECT events.ev_ca_value
                 FROM events
                 WHERE (date(ev_tstamp) = CURDATE()) 
@@ -132,9 +165,11 @@ const guestRealEntry = (building) => {
                       and (${reqLitera}) ORDER by events.ev_ow_id`;
 };
 
-const guestRealExit = (building) => {
-  const reqLitera = (building === 'AC') ? 'events.ev_addr = 2 or events.ev_addr = 6 or events.ev_addr = 17 or events.ev_addr = 20 or events.ev_addr = 28'
-    : 'events.ev_addr = 37 or events.ev_addr = 40 or events.ev_addr = 46 or events.ev_addr = 48';
+const guestRealExit = building => {
+  const reqLitera =
+    building === 'AC'
+      ? 'events.ev_addr = 2 or events.ev_addr = 6 or events.ev_addr = 17 or events.ev_addr = 20 or events.ev_addr = 28'
+      : 'events.ev_addr = 37 or events.ev_addr = 40 or events.ev_addr = 46 or events.ev_addr = 48';
   return `SELECT events.ev_ca_value
               FROM events
               WHERE (date(ev_tstamp) = CURDATE()) 

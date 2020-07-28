@@ -294,6 +294,7 @@ function parseEvent(data) {
   const apEntry = [1, 5, 16, 21, 27, 36, 39, 41, 43, 45, 47];
   const apExit = [2, 6, 17, 20, 28, 37, 40, 42, 44, 46, 48];
   const employee = [3, 4, 189, 190, 191, 192, 193, 194, 195, 332];
+  const apServerRoom = [];
   const guestCardId = [
     230,
     231,
@@ -583,7 +584,7 @@ wss.on('connection', ws => {
   });
 
   initDash(ws);
-  initZabbixAPIServer(ws);
+  initZabbixAPIServer(wss, ws);
 
   ws.on('close', () => {
     logger.info(`Connection closed ${id}`);
