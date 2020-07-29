@@ -294,7 +294,7 @@ function parseEvent(data) {
   const apEntry = [1, 5, 16, 21, 27, 36, 39, 41, 43, 45, 47];
   const apExit = [2, 6, 17, 20, 28, 37, 40, 42, 44, 46, 48];
   const employee = [3, 4, 189, 190, 191, 192, 193, 194, 195, 332];
-  const apServerRoom = [];
+  const apServerRoom = [29, 38];
   const guestCardId = [
     230,
     231,
@@ -434,27 +434,60 @@ function parseEvent(data) {
         // отправка события срабатывания карточки доступа сотрудника
 
         if (item.EvUser !== 0) {
-          const lastEmployeeRows = await dbConnect.query(dbSelect.lastEmployee(item.EvUser));
-          let lastEmployee = {};
-          if (lastEmployeeRows.length === 1) {
-            lastEmployee = {
-              id: lastEmployeeRows[0].id,
-              lastName: lastEmployeeRows[0].lname,
-              firstName: lastEmployeeRows[0].fname,
-              middleName: lastEmployeeRows[0].mname,
-              photo: lastEmployeeRows[0].photo,
-              apointName: lastEmployeeRows[0].apoint,
-              timeStamp: lastEmployeeRows[0].tstamp,
-            };
+          try {
+            const lastEmployeeRows = await dbConnect.query(dbSelect.lastEmployee(item.EvUser));
+            let lastEmployee = {};
+            if (lastEmployeeRows.length === 1) {
+              lastEmployee = {
+                id: lastEmployeeRows[0].id,
+                lastName: lastEmployeeRows[0].lname,
+                firstName: lastEmployeeRows[0].fname,
+                middleName: lastEmployeeRows[0].mname,
+                photo: lastEmployeeRows[0].photo,
+                apointName: lastEmployeeRows[0].apoint,
+                timeStamp: lastEmployeeRows[0].tstamp,
+              };
+            }
+            wss.clients.forEach(client => {
+              client.send(
+                JSON.stringify({
+                  event: 'event_employee',
+                  data: lastEmployee,
+                }),
+              );
+            });
+          } catch (error) {
+            logger.error(error);
           }
-          wss.clients.forEach(client => {
-            client.send(
-              JSON.stringify({
-                event: 'event_employee',
-                data: lastEmployee,
-              }),
-            );
-          });
+        }
+
+        if (apServerRoom.indexOf(item.EvAddr) !== -1) {
+          try {
+            const lastServerRoomEmployeeRows = await dbConnect.query(dbSelect.lastServerRoomEmployee(item.EvUser));
+            /*
+            let lastServerRoomEmployee = {};
+            if (lastServerRoomEmployeeRows.length === 1) {
+              lastServerRoomEmployee = {
+                lastName: lastServerRoomEmployeeRows[0].lname,
+                firstName: lastServerRoomEmployeeRows[0].fname,
+                middleName: lastServerRoomEmployeeRows[0].mname,
+                photo: lastServerRoomEmployeeRows[0].photo,
+                apointName: lastServerRoomEmployeeRows[0].apoint,
+                timeStamp: lastServerRoomEmployeeRows[0].tstamp,
+                apointAddr: lastServerRoomEmployeeRows[0].apointaddr,
+              };
+            } */
+            wss.clients.forEach(client => {
+              client.send(
+                JSON.stringify({
+                  event: item.EvAddr === 29 ? 'event_server_room_1_employee' : 'event_server_room_2_employee',
+                  data: lastServerRoomEmployeeRows[0],
+                }),
+              );
+            });
+          } catch (error) {
+            logger.error(error);
+          }
         }
       } catch (error) {
         logger.error(error);

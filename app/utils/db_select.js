@@ -84,6 +84,34 @@ const lastEmployee = employeeId => `SELECT ow_id as id,
                       ORDER by events.ev_tstamp
                       DESC LIMIT 1`;
 
+const lastServerRoomEmployee = employeeId => `SELECT ow_lname as lname,
+                              ow_fname as fname,
+                              ow_mname as mname,
+                              ow_photo as photo,
+                              apoints.ap_name as apoint,
+                              events.ev_tstamp as tstamp,
+                              events.ev_addr as apoindaddr
+                      FROM Last_Server_Room_Events
+                              inner join events on (last_ev_id = events.ev_id)
+                              inner join apoints on (events.ev_addr = apoints.ap_id)
+                      WHERE ow_id = "${employeeId}"
+                      ORDER by events.ev_tstamp
+                      DESC LIMIT 1`;
+
+const lastServerRoomEmployeeInit = serverRoomId => `SELECT ow_lname as lname,
+                              ow_fname as fname,
+                              ow_mname as mname,
+                              ow_photo as photo,
+                              apoints.ap_name as apoint,
+                              events.ev_tstamp as tstamp,
+                              events.ev_addr as apoindaddr
+                      FROM Last_Server_Room_Events
+                              inner join events on (last_ev_id = events.ev_id)
+                              inner join apoints on (events.ev_addr = apoints.ap_id)
+                      WHERE events.ev_addr = "${serverRoomId}"
+                      ORDER by events.ev_tstamp
+                      DESC LIMIT 1`;
+
 const lastEmployeeUC = `SELECT events.ev_tstamp as tstamp,
                               ow_lname as lname,
                               ow_fname as fname,
@@ -271,6 +299,8 @@ exports.allEmployeeUC = allEmployeeUC;
 exports.lastEntry = lastEntry;
 exports.lastExit = lastExit;
 exports.lastEmployee = lastEmployee;
+exports.lastServerRoomEmployee = lastServerRoomEmployee;
+exports.lastServerRoomEmployeeInit = lastServerRoomEmployeeInit;
 exports.lastEmployeeUC = lastEmployeeUC;
 exports.employeeTotalPerDay = employeeTotalPerDay;
 exports.guestCIPerDay = guestCIPerDay;
