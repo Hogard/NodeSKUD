@@ -496,6 +496,27 @@ function parseEvent(data) {
   });
 }
 
+async function lastServerRoomEmployee(clientId) {
+  try {
+    const lastServerRoom1EmployeeRows = await dbConnect.query(dbSelect.lastServerRoomEmployeeInit(29));
+    const lastServerRoom2EmployeeRows = await dbConnect.query(dbSelect.lastServerRoomEmployeeInit(38));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_server_room_1_employee',
+        data: lastServerRoom1EmployeeRows[0],
+      }),
+    );
+    clientId.send(
+      JSON.stringify({
+        event: 'event_server_room_2_employee',
+        data: lastServerRoom2EmployeeRows[0],
+      }),
+    );
+  } catch (error) {
+    logger.error(error);
+  }
+}
+
 // main functions
 async function initDash(clientId) {
   try {
@@ -582,6 +603,7 @@ async function initDash(clientId) {
   realOnTerritory(1, clientId);
   realOnTerritory(36, clientId);
   realCarOnTerritory(clientId);
+  lastServerRoomEmployee(clientId);
 }
 
 //
@@ -617,7 +639,7 @@ wss.on('connection', ws => {
   });
 
   initDash(ws);
-  initZabbixAPIServer(wss, ws);
+  // initZabbixAPIServer(wss, ws);
 
   ws.on('close', () => {
     logger.info(`Connection closed ${id}`);
@@ -655,6 +677,7 @@ function reversAPIServer() {
     process.exit(1);
     // socket = initApiSocket();
   });
+  initZabbixAPIServer(wss);
 }
 
 exports.sendExtJSON = sendExtJSON;

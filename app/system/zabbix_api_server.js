@@ -1,8 +1,8 @@
 const fetch = require('node-fetch');
 const logger = require('../config/logger_config');
 const config = require('../config/system_config');
-const dbConnect = require('../utils/db_connect');
-const dbSelect = require('../utils/db_select');
+
+let zabbixAuthToken;
 
 // Log in and obtain an authentication token
 async function getAuthToken() {
@@ -28,7 +28,26 @@ async function getAuthToken() {
   return tokenJSON.result;
 }
 
-// Retrieve all data about two hosts
+async function getHostbyTrigger(token, triggerid) {
+  const postData = {
+    jsonrpc: '2.0',
+    method: 'host.get',
+    id: 1,
+    auth: token,
+    params: {
+      triggerids: triggerid,
+      output: ['hostid', 'name'],
+    },
+  };
+  const dataResponse = await fetch(config.zabbix.host, {
+    method: 'post',
+    body: JSON.stringify(postData),
+    headers: { 'Content-Type': 'application/json-rpc' },
+  });
+  const dataJSON = await dataResponse.json();
+  return dataJSON.result;
+}
+
 async function getUniPingData(token) {
   const postData = {
     jsonrpc: '2.0',
@@ -47,7 +66,7 @@ async function getUniPingData(token) {
     headers: { 'Content-Type': 'application/json-rpc' },
   });
   const dataJSON = await dataResponse.json();
-  return dataJSON;
+  return dataJSON.result;
 }
 
 async function getProviderData(token) {
@@ -79,9 +98,9 @@ async function getProviderData(token) {
     headers: { 'Content-Type': 'application/json-rpc' },
   });
   const dataJSON = await dataResponse.json();
-  return dataJSON;
+  return dataJSON.result;
 }
-
+/*
 async function lastServerRoomEmployee(clientId) {
   try {
     const lastServerRoom1EmployeeRows = await dbConnect.query(dbSelect.lastServerRoomEmployeeInit(29));
@@ -102,13 +121,14 @@ async function lastServerRoomEmployee(clientId) {
     logger.error(error);
   }
 }
+*/
 
 async function serverRoomSensor(wss, clientId, data) {
   const uniPingSensorValue = {
-    temper1: data.result[1].lastvalue,
-    temper2: data.result[4].lastvalue,
-    himidity1: data.result[0].lastvalue,
-    himidity2: data.result[3].lastvalue,
+    temper1: data[1].lastvalue,
+    temper2: data[4].lastvalue,
+    himidity1: data[0].lastvalue,
+    himidity2: data[3].lastvalue,
   };
   try {
     if (clientId) {
@@ -135,14 +155,14 @@ async function serverRoomSensor(wss, clientId, data) {
 
 async function providerStatus(wss, clientId, data) {
   const providerValue = {
-    inSpeedOrange: (data.result[7].lastvalue / 1000 / 1000).toFixed(2),
-    outSpeedOrange: (data.result[6].lastvalue / 1000 / 1000).toFixed(2),
-    inSpeedTelros: (data.result[4].lastvalue / 1000 / 1000).toFixed(2),
-    outSpeedTelros: (data.result[0].lastvalue / 1000 / 1000).toFixed(2),
-    inSpeedFilanco: (data.result[5].lastvalue / 1000 / 1000).toFixed(2),
-    outSpeedFilanco: (data.result[1].lastvalue / 1000 / 1000).toFixed(2),
-    bgp62: data.result[3].lastvalue,
-    bgp176: data.result[2].lastvalue,
+    inSpeedOrange: (data[7].lastvalue / 1000 / 1000).toFixed(2),
+    outSpeedOrange: (data[6].lastvalue / 1000 / 1000).toFixed(2),
+    inSpeedTelros: (data[4].lastvalue / 1000 / 1000).toFixed(2),
+    outSpeedTelros: (data[0].lastvalue / 1000 / 1000).toFixed(2),
+    inSpeedFilanco: (data[5].lastvalue / 1000 / 1000).toFixed(2),
+    outSpeedFilanco: (data[1].lastvalue / 1000 / 1000).toFixed(2),
+    bgp62: data[3].lastvalue,
+    bgp176: data[2].lastvalue,
   };
   try {
     if (clientId) {
@@ -177,10 +197,9 @@ async function getUPSEvent(token) {
       groupids: 7,
       selectHosts: ['host', 'name', 'description'],
       severities: [4, 5, 6],
-      value: 1,
       sortfield: ['clock', 'eventid'],
       sortorder: 'DESC',
-      // filter: { value: 1 },
+      filter: { value: 1, acknowledged: '0' },
     },
   };
   const dataResponse = await fetch(config.zabbix.host, {
@@ -189,24 +208,19 @@ async function getUPSEvent(token) {
     headers: { 'Content-Type': 'application/json-rpc' },
   });
   const dataJSON = await dataResponse.json();
-  return dataJSON;
+  return dataJSON.result;
 }
 
 async function upsStatus(wss, clientId, data) {
   const upsValue = [];
-  data.result.forEach((event, index) => {
-    // logger.info({ 'Zabbix Data:': event });
+  data.forEach((event, index) => {
     upsValue[index] = {
       upsName: event.hosts[0].host,
       upsDescription: event.hosts[0].description,
       upsTimeStamp: event.clock,
       upsEventName: event.name,
     };
-
-    // logger.info({ 'Zabbix Data:': upsValue });
   });
-  logger.info({ 'Zabbix Data:': upsValue });
-
   try {
     if (clientId) {
       clientId.send(
@@ -230,18 +244,83 @@ async function upsStatus(wss, clientId, data) {
   }
 }
 
+async function getSwitchEvent(token) {
+  const postData = {
+    jsonrpc: '2.0',
+    method: 'problem.get',
+    id: 1,
+    auth: token,
+    params: {
+      groupids: 10,
+      severities: [2, 3, 4, 5],
+      sortfield: ['eventid'],
+      sortorder: 'DESC',
+    },
+  };
+  const dataResponse = await fetch(config.zabbix.host, {
+    method: 'post',
+    body: JSON.stringify(postData),
+    headers: { 'Content-Type': 'application/json-rpc' },
+  });
+  const dataJSON = await dataResponse.json();
+  return dataJSON.result;
+}
+
+async function getSwitchEventById(token, data) {
+  const switchValue = [];
+  let switchName;
+  logger.info({ 'Zabbix data1 :': data });
+  data.forEach((event, index) => {
+    //  getHostbyTrigger(token, event.objectid).then(host => {
+    //  switchName = host[0].name;
+    // });
+    // // logger.info({ 'Zabbix:': switchName });
+    switchValue[index] = {
+      switchName: '', // event.hosts[0].host,
+      switchDescription: '', // event.hosts[0].description,
+      switchTimeStamp: '', // event.clock,
+      switchEventName: '', // event.name,
+    };
+  });
+
+  return switchValue;
+}
+
+function switchStatus(wss, clientId, events) {
+  try {
+    if (clientId) {
+      clientId.send(
+        JSON.stringify({
+          event: 'event_switch_value',
+          data: events,
+        }),
+      );
+    } else {
+      wss.clients.forEach(client => {
+        client.send(
+          JSON.stringify({
+            event: 'event_switch_value',
+            data: events,
+          }),
+        );
+      });
+    }
+  } catch (error) {
+    logger.error(error);
+  }
+}
+
 function initZabbixAPIServer(wss, clientId) {
-  lastServerRoomEmployee(clientId);
+  // lastServerRoomEmployee(clientId);
   getAuthToken().then(token => {
+    zabbixAuthToken = token;
     setInterval(() => {
       getUniPingData(token).then(data => {
-        // logger.info({ 'Zabbix Data:': data.result[0].lastvalue });
         serverRoomSensor(wss, clientId, data);
       });
     }, 30000);
     setInterval(() => {
       getProviderData(token).then(data => {
-        // logger.info({ 'Zabbix Data:': data.result });
         providerStatus(wss, clientId, data);
       });
     }, 30000);
@@ -250,6 +329,13 @@ function initZabbixAPIServer(wss, clientId) {
         upsStatus(wss, clientId, data);
       });
     }, 60000);
+    setInterval(() => {
+      getSwitchEvent(token).then(data => {
+        getSwitchEventById(token, data).then(events => {
+          switchStatus(wss, clientId, events);
+        });
+      });
+    }, 30000);
   });
 }
 
