@@ -39,13 +39,17 @@ async function getHostbyTrigger(token, triggerid) {
       output: ['hostid', 'name'],
     },
   };
-  const dataResponse = await fetch(config.zabbix.host, {
-    method: 'post',
-    body: JSON.stringify(postData),
-    headers: { 'Content-Type': 'application/json-rpc' },
-  });
-  const dataJSON = await dataResponse.json();
-  return dataJSON.result;
+  try {
+    const dataResponse = await fetch(config.zabbix.host, {
+      method: 'post',
+      body: JSON.stringify(postData),
+      headers: { 'Content-Type': 'application/json-rpc' },
+    });
+    const dataJSON = await dataResponse.json();
+    return dataJSON.result;
+  } catch (error) {
+    return error;
+  }
 }
 
 async function getUniPingData(token) {
@@ -257,33 +261,48 @@ async function getSwitchEvent(token) {
       sortorder: 'DESC',
     },
   };
-  const dataResponse = await fetch(config.zabbix.host, {
-    method: 'post',
-    body: JSON.stringify(postData),
-    headers: { 'Content-Type': 'application/json-rpc' },
-  });
-  const dataJSON = await dataResponse.json();
-  return dataJSON.result;
+  try {
+    const dataResponse = await fetch(config.zabbix.host, {
+      method: 'post',
+      body: JSON.stringify(postData),
+      headers: { 'Content-Type': 'application/json-rpc' },
+    });
+    const dataJSON = await dataResponse.json();
+    return dataJSON.result;
+  } catch (error) {
+    return error;
+  }
 }
 
 async function getSwitchEventById(token, data) {
+  let switchName = [];
   const switchValue = [];
-  let switchName;
-  logger.info({ 'Zabbix data1 :': data });
-  data.forEach((event, index) => {
-    //  getHostbyTrigger(token, event.objectid).then(host => {
-    //  switchName = host[0].name;
-    // });
-    // // logger.info({ 'Zabbix:': switchName });
-    switchValue[index] = {
-      switchName: '', // event.hosts[0].host,
+  // logger.info({ 'Zabbix data1 :': data });
+  for (let i = 0; i < data.length; i++) {
+    switchName = await getHostbyTrigger(token, data[i].objectid);
+    // logger.info({ 'Zabbix data1 :': switchName[0].name });
+    switchValue[i] = {
+      switchName: switchName[0].name, // event.hosts[0].host,
       switchDescription: '', // event.hosts[0].description,
-      switchTimeStamp: '', // event.clock,
-      switchEventName: '', // event.name,
+      switchTimeStamp: data[i].clock,
+      switchEventName: data[i].name,
+    };
+  }
+  /*
+  data.forEach(async (event, index) => {
+    switchName = await getHostbyTrigger(token, event.objectid);
+    logger.info({ 'Zabbix data1 :': switchName[0].name });
+    switchValue[index] = {
+      switchName, // event.hosts[0].host,
+      switchDescription: '', // event.hosts[0].description,
+      switchTimeStamp: event.clock,
+      switchEventName: event.name,
     };
   });
-
+*/
+  // logger.info({ 'Zabbix:': switchValue });
   return switchValue;
+  // logger.info({ 'Zabbix:': switchValue });
 }
 
 function switchStatus(wss, clientId, events) {
@@ -332,6 +351,7 @@ function initZabbixAPIServer(wss, clientId) {
     setInterval(() => {
       getSwitchEvent(token).then(data => {
         getSwitchEventById(token, data).then(events => {
+          // logger.info({ 'Zabbix:': events });
           switchStatus(wss, clientId, events);
         });
       });
