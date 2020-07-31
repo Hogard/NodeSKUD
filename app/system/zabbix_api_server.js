@@ -2,9 +2,14 @@ const fetch = require('node-fetch');
 const logger = require('../config/logger_config');
 const config = require('../config/system_config');
 
-let zabbixAuthToken;
+const hardwareGroup = {
+  7: 'ups',
+  10: 'switch',
+  13: 'vmware',
+  17: 'router',
+};
 
-// Log in and obtain an authentication token
+// Log in and obtain an authentication token.
 async function getAuthToken() {
   const authData = {
     jsonrpc: '2.0',
@@ -36,7 +41,7 @@ async function getHostbyTrigger(token, triggerid) {
     auth: token,
     params: {
       triggerids: triggerid,
-      output: ['hostid', 'name'],
+      output: ['hostid', 'name', 'description'],
     },
   };
   try {
@@ -104,28 +109,6 @@ async function getProviderData(token) {
   const dataJSON = await dataResponse.json();
   return dataJSON.result;
 }
-/*
-async function lastServerRoomEmployee(clientId) {
-  try {
-    const lastServerRoom1EmployeeRows = await dbConnect.query(dbSelect.lastServerRoomEmployeeInit(29));
-    const lastServerRoom2EmployeeRows = await dbConnect.query(dbSelect.lastServerRoomEmployeeInit(38));
-    clientId.send(
-      JSON.stringify({
-        event: 'event_server_room_1_employee',
-        data: lastServerRoom1EmployeeRows[0],
-      }),
-    );
-    clientId.send(
-      JSON.stringify({
-        event: 'event_server_room_2_employee',
-        data: lastServerRoom2EmployeeRows[0],
-      }),
-    );
-  } catch (error) {
-    logger.error(error);
-  }
-}
-*/
 
 async function serverRoomSensor(wss, clientId, data) {
   const uniPingSensorValue = {
@@ -191,71 +174,14 @@ async function providerStatus(wss, clientId, data) {
   }
 }
 
-async function getUPSEvent(token) {
-  const postData = {
-    jsonrpc: '2.0',
-    method: 'event.get',
-    id: 1,
-    auth: token,
-    params: {
-      groupids: 7,
-      selectHosts: ['host', 'name', 'description'],
-      severities: [4, 5, 6],
-      sortfield: ['clock', 'eventid'],
-      sortorder: 'DESC',
-      filter: { value: 1, acknowledged: '0' },
-    },
-  };
-  const dataResponse = await fetch(config.zabbix.host, {
-    method: 'post',
-    body: JSON.stringify(postData),
-    headers: { 'Content-Type': 'application/json-rpc' },
-  });
-  const dataJSON = await dataResponse.json();
-  return dataJSON.result;
-}
-
-async function upsStatus(wss, clientId, data) {
-  const upsValue = [];
-  data.forEach((event, index) => {
-    upsValue[index] = {
-      upsName: event.hosts[0].host,
-      upsDescription: event.hosts[0].description,
-      upsTimeStamp: event.clock,
-      upsEventName: event.name,
-    };
-  });
-  try {
-    if (clientId) {
-      clientId.send(
-        JSON.stringify({
-          event: 'event_ups_value',
-          data: upsValue,
-        }),
-      );
-    } else {
-      wss.clients.forEach(client => {
-        client.send(
-          JSON.stringify({
-            event: 'event_ups_value',
-            data: upsValue,
-          }),
-        );
-      });
-    }
-  } catch (error) {
-    logger.error(error);
-  }
-}
-
-async function getSwitchEvent(token) {
+async function getHardwareEvent(token, groupId) {
   const postData = {
     jsonrpc: '2.0',
     method: 'problem.get',
     id: 1,
     auth: token,
     params: {
-      groupids: 10,
+      groupids: groupId,
       severities: [2, 3, 4, 5],
       sortfield: ['eventid'],
       sortorder: 'DESC',
@@ -274,43 +200,28 @@ async function getSwitchEvent(token) {
   }
 }
 
-async function getSwitchEventById(token, data) {
+async function getHardwareEventById(token, data) {
   let switchName = [];
   const switchValue = [];
-  // logger.info({ 'Zabbix data1 :': data });
-  for (let i = 0; i < data.length; i++) {
+  for (let i = 0; i < data.length; i += 1) {
     switchName = await getHostbyTrigger(token, data[i].objectid);
-    // logger.info({ 'Zabbix data1 :': switchName[0].name });
     switchValue[i] = {
-      switchName: switchName[0].name, // event.hosts[0].host,
-      switchDescription: '', // event.hosts[0].description,
-      switchTimeStamp: data[i].clock,
-      switchEventName: data[i].name,
+      hardwareName: switchName[0].name,
+      hardwareDescription: switchName[0].description,
+      eventTimeStamp: data[i].clock,
+      eventName: data[i].name,
+      eventSeverity: data[i].severity,
     };
   }
-  /*
-  data.forEach(async (event, index) => {
-    switchName = await getHostbyTrigger(token, event.objectid);
-    logger.info({ 'Zabbix data1 :': switchName[0].name });
-    switchValue[index] = {
-      switchName, // event.hosts[0].host,
-      switchDescription: '', // event.hosts[0].description,
-      switchTimeStamp: event.clock,
-      switchEventName: event.name,
-    };
-  });
-*/
-  // logger.info({ 'Zabbix:': switchValue });
   return switchValue;
-  // logger.info({ 'Zabbix:': switchValue });
 }
 
-function switchStatus(wss, clientId, events) {
+function sendHardwareEvent(wss, clientId, events, groupName) {
   try {
     if (clientId) {
       clientId.send(
         JSON.stringify({
-          event: 'event_switch_value',
+          event: `event_${groupName}_value`,
           data: events,
         }),
       );
@@ -318,7 +229,7 @@ function switchStatus(wss, clientId, events) {
       wss.clients.forEach(client => {
         client.send(
           JSON.stringify({
-            event: 'event_switch_value',
+            event: `event_${groupName}_value`,
             data: events,
           }),
         );
@@ -329,34 +240,29 @@ function switchStatus(wss, clientId, events) {
   }
 }
 
-function initZabbixAPIServer(wss, clientId) {
-  // lastServerRoomEmployee(clientId);
-  getAuthToken().then(token => {
-    zabbixAuthToken = token;
-    setInterval(() => {
-      getUniPingData(token).then(data => {
-        serverRoomSensor(wss, clientId, data);
-      });
-    }, 30000);
-    setInterval(() => {
-      getProviderData(token).then(data => {
-        providerStatus(wss, clientId, data);
-      });
-    }, 30000);
-    setInterval(() => {
-      getUPSEvent(token).then(data => {
-        upsStatus(wss, clientId, data);
-      });
-    }, 60000);
-    setInterval(() => {
-      getSwitchEvent(token).then(data => {
-        getSwitchEventById(token, data).then(events => {
-          // logger.info({ 'Zabbix:': events });
-          switchStatus(wss, clientId, events);
+async function initZabbixAPIServer(wss, clientId) {
+  const token = await getAuthToken();
+
+  setInterval(() => {
+    getUniPingData(token).then(data => {
+      serverRoomSensor(wss, clientId, data);
+    });
+  }, 30000);
+  setInterval(() => {
+    getProviderData(token).then(data => {
+      providerStatus(wss, clientId, data);
+    });
+  }, 30000);
+  setInterval(() => {
+    Object.entries(hardwareGroup).forEach(([key, value]) => {
+      logger.info({ 'Processing Zabbix Auth.': key });
+      getHardwareEvent(token, key).then(data => {
+        getHardwareEventById(token, data).then(events => {
+          sendHardwareEvent(wss, clientId, events, value);
         });
       });
-    }, 30000);
-  });
+    });
+  }, 30000);
 }
 
 module.exports = initZabbixAPIServer;
