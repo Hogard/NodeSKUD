@@ -7,6 +7,7 @@ const hardwareGroup = {
   10: 'switch',
   13: 'vmware',
   17: 'router',
+  21: 'server',
 };
 
 // Log in and obtain an authentication token.
