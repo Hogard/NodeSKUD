@@ -293,6 +293,22 @@ const apiGetEmployeeCount = `SELECT tdata as xAxes, count(tdata) as yAxes
                               as t
                             GROUP BY tdata`;
 
+const vpnOnline = `SELECT vpn_access_events.login_date_time as loginDateTime,
+                          vpn_access_events.login_duration as loginDuration,
+                          vpn_access_events.account as account,
+                          vpn_access_events.ip_address as ipAddress
+                    FROM vpn_access_events
+                    WHERE (date(vpn_access_events.login_date_time) = CURDATE() and vpn_access_events.login_duration = '') 
+                    ORDER by vpn_access_events.login_date_time`;
+
+const vpnSessionPerDay = `SELECT vpn_access_events.login_date_time as loginDateTime,
+                                 vpn_access_events.login_duration as loginDuration,
+                                 vpn_access_events.account as account,
+                                 vpn_access_events.ip_address as ipAddress
+                          FROM vpn_access_events
+                          WHERE (date(vpn_access_events.login_date_time) = CURDATE() and vpn_access_events.login_duration <> '') 
+                          ORDER by vpn_access_events.account, vpn_access_events.login_date_time`;
+
 exports.allTenEntry = allTenEntry;
 exports.allTenExit = allTenExit;
 exports.allEmployeeUC = allEmployeeUC;
@@ -318,3 +334,5 @@ exports.apiGetGuestCount = apiGetGuestCount;
 exports.apiGetCIGuestCount = apiGetCIGuestCount;
 exports.apiGetCarCount = apiGetCarCount;
 exports.apiGetEmployeeCount = apiGetEmployeeCount;
+exports.vpnOnline = vpnOnline;
+exports.vpnSessionPerDay = vpnSessionPerDay;

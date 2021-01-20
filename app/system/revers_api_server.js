@@ -11,6 +11,7 @@ const dbSelect = require('../utils/db_select');
 const wss = websocketServer();
 
 const initZabbixAPIServer = require('./zabbix_api_server');
+const initVPNAPIServer = require('./vpn_api_server');
 
 const socket = initApiSocket();
 // const http = httpServer(socket);
@@ -678,6 +679,7 @@ function reversAPIServer() {
     // socket = initApiSocket();
   });
   initZabbixAPIServer(wss);
+  initVPNAPIServer(wss);
 }
 
 exports.sendExtJSON = sendExtJSON;
