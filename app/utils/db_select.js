@@ -304,8 +304,10 @@ const vpnOnline = `SELECT vpn_access_events.login_date_time as loginDateTime,
 const vpnSessionPerDay = `SELECT vpn_access_events.login_date_time as loginDateTime,
                                  vpn_access_events.login_duration as loginDuration,
                                  vpn_access_events.account as account,
-                                 vpn_access_events.ip_address as ipAddress
+                                 vpn_access_events.ip_address as ipAddress,
+                                 owners.ow_photo as photo
                           FROM vpn_access_events
+                                 inner join owners on (account = owners.ow_vpn_account)
                           WHERE (date(vpn_access_events.login_date_time) = CURDATE() and vpn_access_events.login_duration <> '') 
                           ORDER by vpn_access_events.account, vpn_access_events.login_date_time`;
 
