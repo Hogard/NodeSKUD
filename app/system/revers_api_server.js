@@ -11,7 +11,7 @@ const dbSelect = require('../utils/db_select');
 const wss = websocketServer();
 
 const initZabbixAPIServer = require('./zabbix_api_server');
-const initVPNAPIServer = require('./vpn_api_server');
+const vpnAPIServer = require('./vpn_api_server');
 
 const socket = initApiSocket();
 // const http = httpServer(socket);
@@ -636,6 +636,9 @@ wss.on('connection', ws => {
   logger.info(`New connection ${id}`);
 
   ws.on('message', message => {
+    if (JSON.parse(message).event === 'get-vpn-user-info') {
+      vpnAPIServer.sendVPNUserStatus(ws, JSON.parse(message).data);
+    }
     logger.info(`Received message ${message}`);
   });
 
@@ -679,7 +682,7 @@ function reversAPIServer() {
     // socket = initApiSocket();
   });
   initZabbixAPIServer(wss);
-  initVPNAPIServer(wss);
+  vpnAPIServer.init(wss);
 }
 
 exports.sendExtJSON = sendExtJSON;

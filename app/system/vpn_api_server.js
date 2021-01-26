@@ -52,11 +52,55 @@ async function vpnSessionPerDay(wss, clientId) {
   }
 }
 
+async function vpnAllUsers(wss, clientId) {
+  try {
+    const vpnAllUsersRows = await dbConnect.query(dbSelect.vpnAllUsers);
+    if (clientId) {
+      clientId.send(
+        JSON.stringify({
+          event: 'event_vpn_all_users',
+          data: vpnAllUsersRows,
+        }),
+      );
+    } else {
+      wss.clients.forEach(client => {
+        client.send(
+          JSON.stringify({
+            event: 'event_vpn_all_users',
+            data: vpnAllUsersRows,
+          }),
+        );
+      });
+    }
+  } catch (error) {
+    logger.error(error);
+  }
+}
+
+async function sendVPNUserStatus(clientId, account) {
+  try {
+    const vpnUserStatusRows = await dbConnect.query(dbSelect.vpnUserStatus(account));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_vpn_user_status',
+        data: vpnUserStatusRows.length,
+      }),
+    );
+  } catch (error) {
+    logger.error(error);
+  }
+}
+
 async function initVPNAPIServer(wss, clientId) {
   setInterval(() => {
     vpnOnline(wss, clientId);
-    vpnSessionPerDay(wss, clientId);
+    // vpnSessionPerDay(wss, clientId);
+  }, 60000);
+  setInterval(() => {
+    vpnAllUsers(wss, clientId);
   }, 60000);
 }
 
-module.exports = initVPNAPIServer;
+exports.sendVPNUserStatus = sendVPNUserStatus;
+exports.init = initVPNAPIServer;
+// module.exports = initVPNAPIServer;
