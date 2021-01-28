@@ -637,12 +637,14 @@ wss.on('connection', ws => {
 
   ws.on('message', message => {
     if (JSON.parse(message).event === 'get-vpn-user-info') {
-      vpnAPIServer.sendVPNUserStatus(ws, JSON.parse(message).data);
+      vpnAPIServer.sendUserStatus(ws, JSON.parse(message).data);
+      vpnAPIServer.sendUserSessions(ws, JSON.parse(message).data);
     }
     logger.info(`Received message ${message}`);
   });
 
   initDash(ws);
+  vpnAPIServer.init(wss, ws);
   // initZabbixAPIServer(wss, ws);
 
   ws.on('close', () => {

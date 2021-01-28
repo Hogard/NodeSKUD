@@ -301,18 +301,20 @@ const vpnOnline = `SELECT vpn_access_events.login_date_time as loginDateTime,
                     WHERE (date(vpn_access_events.login_date_time) = CURDATE() and vpn_access_events.login_duration = '') 
                     ORDER by vpn_access_events.login_date_time`;
 
-const vpnSessionPerDay = `SELECT vpn_access_events.login_date_time as loginDateTime,
-                                 vpn_access_events.login_duration as loginDuration,
-                                 vpn_access_events.account as account,
-                                 vpn_access_events.ip_address as ipAddress,
-                                 owners.ow_lname AS lastName,
-                                 owners.ow_fname AS firstName,
-                                 owners.ow_mname AS middleName,
-                                 owners.ow_photo as photo
-                          FROM vpn_access_events
-                                 inner join owners on (account = owners.ow_vpn_account)
-                          WHERE (date(vpn_access_events.login_date_time) = CURDATE() and vpn_access_events.login_duration <> '') 
-                          ORDER by vpn_access_events.account, vpn_access_events.login_date_time`;
+const vpnUserSessions = account => `SELECT vpn_access_events.login_date_time as loginDateTime,
+                                          vpn_access_events.login_duration as loginDuration,
+                                          vpn_access_events.account as account,
+                                          vpn_access_events.ip_address as ipAddress,
+                                          owners.ow_lname AS lastName,
+                                          owners.ow_fname AS firstName,
+                                          owners.ow_mname AS middleName,
+                                          owners.ow_photo as photo
+                                    FROM vpn_access_events
+                                          inner join owners on (account = owners.ow_vpn_account)
+                                    WHERE (vpn_access_events.account = '${account}'
+                                            and date(vpn_access_events.login_date_time) >= CURDATE() - INTERVAL 7 DAY
+                                            and vpn_access_events.login_duration <> '') 
+                                    ORDER by vpn_access_events.account, vpn_access_events.login_date_time`;
 
 const vpnAllUsers = `SELECT owners.ow_lname AS lastName,
                             owners.ow_fname AS firstName,
@@ -323,7 +325,7 @@ const vpnAllUsers = `SELECT owners.ow_lname AS lastName,
                      WHERE (owners.ow_vpn_account <> '')
                      ORDER by owners.ow_lname`;
 
-const vpnUserStatus = account => `SELECT vpn_access_events.login_duration as loginDuration
+const vpnUserStatus = account => `SELECT vpn_access_events.ip_address as ipAddress
                                   FROM vpn_access_events
                                   WHERE ( vpn_access_events.account = '${account}' and vpn_access_events.login_duration = '') 
                                   ORDER by vpn_access_events.login_date_time`;
@@ -354,6 +356,6 @@ exports.apiGetCIGuestCount = apiGetCIGuestCount;
 exports.apiGetCarCount = apiGetCarCount;
 exports.apiGetEmployeeCount = apiGetEmployeeCount;
 exports.vpnOnline = vpnOnline;
-exports.vpnSessionPerDay = vpnSessionPerDay;
+exports.vpnUserSessions = vpnUserSessions;
 exports.vpnAllUsers = vpnAllUsers;
 exports.vpnUserStatus = vpnUserStatus;

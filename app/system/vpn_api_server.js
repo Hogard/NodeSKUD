@@ -2,7 +2,7 @@ const logger = require('../config/logger_config');
 const dbConnect = require('../utils/db_connect');
 const dbSelect = require('../utils/db_select');
 
-async function vpnOnline(wss, clientId) {
+async function connectedUsers(wss, clientId) {
   try {
     const vpnOnlineRows = await dbConnect.query(dbSelect.vpnOnline);
     if (clientId) {
@@ -27,32 +27,21 @@ async function vpnOnline(wss, clientId) {
   }
 }
 
-async function vpnSessionPerDay(wss, clientId) {
+async function sendUserSessions(clientId, account) {
   try {
-    const vpnSessionPerDayRows = await dbConnect.query(dbSelect.vpnSessionPerDay);
-    if (clientId) {
-      clientId.send(
-        JSON.stringify({
-          event: 'event_vpn_session_per_day',
-          data: vpnSessionPerDayRows,
-        }),
-      );
-    } else {
-      wss.clients.forEach(client => {
-        client.send(
-          JSON.stringify({
-            event: 'event_vpn_session_per_day',
-            data: vpnSessionPerDayRows,
-          }),
-        );
-      });
-    }
+    const vpnUserSessionsRows = await dbConnect.query(dbSelect.vpnUserSessions(account));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_vpn_user_sessions',
+        data: vpnUserSessionsRows,
+      }),
+    );
   } catch (error) {
     logger.error(error);
   }
 }
 
-async function vpnAllUsers(wss, clientId) {
+async function allUsers(wss, clientId) {
   try {
     const vpnAllUsersRows = await dbConnect.query(dbSelect.vpnAllUsers);
     if (clientId) {
@@ -77,13 +66,13 @@ async function vpnAllUsers(wss, clientId) {
   }
 }
 
-async function sendVPNUserStatus(clientId, account) {
+async function sendUserStatus(clientId, account) {
   try {
     const vpnUserStatusRows = await dbConnect.query(dbSelect.vpnUserStatus(account));
     clientId.send(
       JSON.stringify({
         event: 'event_vpn_user_status',
-        data: vpnUserStatusRows.length,
+        data: vpnUserStatusRows[0].ipAddress,
       }),
     );
   } catch (error) {
@@ -91,16 +80,23 @@ async function sendVPNUserStatus(clientId, account) {
   }
 }
 
-async function initVPNAPIServer(wss, clientId) {
+async function initApi(wss, clientId) {
+  connectedUsers(wss, clientId);
+  allUsers(wss, clientId);
+}
+
+async function vpnEvents(wss, clientId) {
   setInterval(() => {
-    vpnOnline(wss, clientId);
+    connectedUsers(wss, clientId);
     // vpnSessionPerDay(wss, clientId);
   }, 60000);
   setInterval(() => {
-    vpnAllUsers(wss, clientId);
-  }, 60000);
+    allUsers(wss, clientId);
+  }, 600000);
 }
 
-exports.sendVPNUserStatus = sendVPNUserStatus;
-exports.init = initVPNAPIServer;
+exports.sendUserSessions = sendUserSessions;
+exports.sendUserStatus = sendUserStatus;
+exports.init = initApi;
+exports.vpnEvents = vpnEvents;
 // module.exports = initVPNAPIServer;
