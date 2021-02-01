@@ -638,7 +638,10 @@ wss.on('connection', ws => {
   ws.on('message', message => {
     if (JSON.parse(message).event === 'get-vpn-user-info') {
       vpnAPIServer.sendUserStatus(ws, JSON.parse(message).data);
-      vpnAPIServer.sendUserSessions(ws, JSON.parse(message).data);
+      vpnAPIServer.sendUserSessionForDate(ws, JSON.parse(message).data);
+    }
+    if (JSON.parse(message).event === 'get-vpn-user-session') {
+      vpnAPIServer.sendUserSessionForDate(ws, JSON.parse(message).data);
     }
     logger.info(`Received message ${message}`);
   });

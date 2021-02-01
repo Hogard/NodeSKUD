@@ -316,6 +316,21 @@ const vpnUserSessions = account => `SELECT vpn_access_events.login_date_time as 
                                             and vpn_access_events.login_duration <> '') 
                                     ORDER by vpn_access_events.account, vpn_access_events.login_date_time`;
 
+const vpnUserSessionForDate = (sessionDate, account) => `SELECT vpn_access_events.login_date_time as loginDateTime,
+                                          vpn_access_events.login_duration as loginDuration,
+                                          vpn_access_events.account as account,
+                                          vpn_access_events.ip_address as ipAddress,
+                                          owners.ow_lname AS lastName,
+                                          owners.ow_fname AS firstName,
+                                          owners.ow_mname AS middleName,
+                                          owners.ow_photo as photo
+                                    FROM vpn_access_events
+                                          inner join owners on (account = owners.ow_vpn_account)
+                                    WHERE (vpn_access_events.account = '${account}'
+                                            and date(vpn_access_events.login_date_time) = '${sessionDate}'
+                                            and vpn_access_events.login_duration <> '') 
+                                    ORDER by vpn_access_events.account, vpn_access_events.login_date_time`;
+
 const vpnAllUsers = `SELECT owners.ow_lname AS lastName,
                             owners.ow_fname AS firstName,
                             owners.ow_mname AS middleName,
@@ -357,5 +372,6 @@ exports.apiGetCarCount = apiGetCarCount;
 exports.apiGetEmployeeCount = apiGetEmployeeCount;
 exports.vpnOnline = vpnOnline;
 exports.vpnUserSessions = vpnUserSessions;
+exports.vpnUserSessionForDate = vpnUserSessionForDate;
 exports.vpnAllUsers = vpnAllUsers;
 exports.vpnUserStatus = vpnUserStatus;

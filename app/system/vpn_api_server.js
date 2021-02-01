@@ -41,6 +41,24 @@ async function sendUserSessions(clientId, account) {
   }
 }
 
+async function sendUserSessionForDate(clientId, data) {
+  const date = JSON.parse(JSON.stringify(data)).sessionDate;
+  const account = JSON.parse(JSON.stringify(data)).vpnAccount;
+
+  // logger.info(JSON.stringify(date));
+  try {
+    const vpnUserSessionForDateRows = await dbConnect.query(dbSelect.vpnUserSessionForDate(date, account));
+    clientId.send(
+      JSON.stringify({
+        event: 'event_vpn_user_session_for_date',
+        data: vpnUserSessionForDateRows,
+      }),
+    );
+  } catch (error) {
+    logger.error(error);
+  }
+}
+
 async function allUsers(wss, clientId) {
   try {
     const vpnAllUsersRows = await dbConnect.query(dbSelect.vpnAllUsers);
@@ -66,15 +84,18 @@ async function allUsers(wss, clientId) {
   }
 }
 
-async function sendUserStatus(clientId, account) {
+async function sendUserStatus(clientId, data) {
+  const account = JSON.parse(JSON.stringify(data)).vpnAccount;
   try {
     const vpnUserStatusRows = await dbConnect.query(dbSelect.vpnUserStatus(account));
-    clientId.send(
-      JSON.stringify({
-        event: 'event_vpn_user_status',
-        data: vpnUserStatusRows[0].ipAddress,
-      }),
-    );
+    if (vpnUserStatusRows.length !== 0) {
+      clientId.send(
+        JSON.stringify({
+          event: 'event_vpn_user_status',
+          data: vpnUserStatusRows[0].ipAddress,
+        }),
+      );
+    }
   } catch (error) {
     logger.error(error);
   }
@@ -96,7 +117,8 @@ async function vpnEvents(wss, clientId) {
 }
 
 exports.sendUserSessions = sendUserSessions;
+exports.sendUserSessionForDate = sendUserSessionForDate;
 exports.sendUserStatus = sendUserStatus;
 exports.init = initApi;
 exports.vpnEvents = vpnEvents;
-// module.exports = initVPNAPIServer;
+/// /  module.exports = initVPNAPIServer;
