@@ -345,6 +345,22 @@ const vpnUserStatus = account => `SELECT vpn_access_events.ip_address as ipAddre
                                   WHERE ( vpn_access_events.account = '${account}' and vpn_access_events.login_duration = '') 
                                   ORDER by vpn_access_events.login_date_time`;
 
+const dhcpAllLeases = `SELECT dhcp_leases.ip_address AS ipAddress,
+                              dhcp_leases.mac_address AS macAddress,
+                              dhcp_leases.host_name AS hostName,
+                              dhcp_leases.address_state AS addressState,
+                              dhcp_leases.lease_expiry_time AS leaseExpiryTime
+                     FROM dhcp_leases
+                     ORDER by dhcp_leases.ip_address`;
+
+const dhcpInfo = `SELECT dhcp_info.scope_id	 AS scopeId	,
+                         dhcp_info.addresses_free AS addressesFree,
+                         dhcp_info.addresses_in_use AS addressesInUse,
+                         dhcp_info.reserved_address AS reservedAddress,
+                         dhcp_info.ps_computer_name AS psComputerName
+                  FROM dhcp_info
+                  ORDER by dhcp_info.scope_id`;
+
 exports.allTenEntry = allTenEntry;
 exports.allTenExit = allTenExit;
 exports.allEmployeeUC = allEmployeeUC;
@@ -375,3 +391,5 @@ exports.vpnUserSessions = vpnUserSessions;
 exports.vpnUserSessionForDate = vpnUserSessionForDate;
 exports.vpnAllUsers = vpnAllUsers;
 exports.vpnUserStatus = vpnUserStatus;
+exports.dhcpAllLeases = dhcpAllLeases;
+exports.dhcpInfo = dhcpInfo;

@@ -12,6 +12,7 @@ const wss = websocketServer();
 
 const initZabbixAPIServer = require('./zabbix_api_server');
 const vpnAPIServer = require('./vpn_api_server');
+const dhcpAPIServer = require('./dhcp_api_server');
 
 const socket = initApiSocket();
 // const http = httpServer(socket);
@@ -648,6 +649,7 @@ wss.on('connection', ws => {
 
   initDash(ws);
   vpnAPIServer.init(wss, ws);
+  dhcpAPIServer.init(wss, ws);
   // initZabbixAPIServer(wss, ws);
 
   ws.on('close', () => {
@@ -687,7 +689,8 @@ function reversAPIServer() {
     // socket = initApiSocket();
   });
   initZabbixAPIServer(wss);
-  vpnAPIServer.init(wss);
+  vpnAPIServer.vpnEvents(wss);
+  dhcpAPIServer.dhcpEvents(wss);
 }
 
 exports.sendExtJSON = sendExtJSON;
