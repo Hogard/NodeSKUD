@@ -292,13 +292,21 @@ const apiGetEmployeeCount = `SELECT tdata as xAxes, count(tdata) as yAxes
                                   GROUP BY ev_ow_id, tdata)
                               as t
                             GROUP BY tdata`;
-
+/*
 const vpnOnline = `SELECT vpn_access_events.login_date_time as loginDateTime,
                           vpn_access_events.login_duration as loginDuration,
                           vpn_access_events.account as account,
                           vpn_access_events.ip_address as ipAddress
                     FROM vpn_access_events
                     WHERE (date(vpn_access_events.login_date_time) = CURDATE() and vpn_access_events.login_duration = '') 
+                    ORDER by vpn_access_events.login_date_time`;
+*/
+const vpnOnline = `SELECT vpn_access_events.login_date_time as loginDateTime,
+                          vpn_access_events.login_duration as loginDuration,
+                          vpn_access_events.account as account,
+                          vpn_access_events.ip_address as ipAddress
+                    FROM vpn_access_events
+                    WHERE vpn_access_events.login_duration = '' 
                     ORDER by vpn_access_events.login_date_time`;
 
 const vpnUserSessions = account => `SELECT vpn_access_events.login_date_time as loginDateTime,
